@@ -6,25 +6,30 @@ using System.Text;
 
 namespace Service
 {
-    class XOpcuaManagement
+    class DiscoveryManagement
     {
-        public void CreateServerInstance()
+        public void StartDiscovery()
         {
             try
             {
                 var config = new ApplicationConfiguration()
                 {
-                    ApplicationName = "XiaoOpcua",
-                    ApplicationUri = Utils.Format(@"urn:{0}:XiaoOpcua", System.Net.Dns.GetHostName()),
-                    ApplicationType = ApplicationType.Server,
+                    ApplicationName = "Axiu UA Discovery",
+                    ApplicationUri = Utils.Format(@"urn:{0}:AxiuUADiscovery", System.Net.Dns.GetHostName()),
+                    ApplicationType = ApplicationType.DiscoveryServer,
                     ServerConfiguration = new ServerConfiguration()
                     {
-                        BaseAddresses = { "opc.tcp://localhost:8020/", "https://localhost:8021/" },
+                        BaseAddresses = { "opc.tcp://localhost:4840/" },
                         MinRequestThreadCount = 5,
                         MaxRequestThreadCount = 100,
                         MaxQueuedRequestCount = 200
                     },
-                    SecurityConfiguration = new SecurityConfiguration()
+                    DiscoveryServerConfiguration = new DiscoveryServerConfiguration()
+                    {
+                        BaseAddresses = { "opc.tcp://localhost:4840/" },
+                        ServerNames = { "OpcuaDiscovery" }
+                    },
+                    SecurityConfiguration = new SecurityConfiguration
                     {
                         ApplicationCertificate = new CertificateIdentifier { StoreType = @"Directory", StorePath = @"%CommonApplicationData%\OPC Foundation\CertificateStores\MachineDefault", SubjectName = Utils.Format(@"CN={0}, DC={1}", "AxiuOpcua", System.Net.Dns.GetHostName()) },
                         TrustedIssuerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = @"%CommonApplicationData%\OPC Foundation\CertificateStores\UA Certificate Authorities" },
@@ -38,7 +43,7 @@ namespace Service
                     ClientConfiguration = new ClientConfiguration { DefaultSessionTimeout = 60000 },
                     TraceConfiguration = new TraceConfiguration()
                 };
-                config.Validate(ApplicationType.Server).GetAwaiter().GetResult();
+                config.Validate(ApplicationType.DiscoveryServer).GetAwaiter().GetResult();
                 if (config.SecurityConfiguration.AutoAcceptUntrustedCertificates)
                 {
                     config.CertificateValidator.CertificateValidation += (s, e) => { e.Accept = (e.Error.StatusCode == StatusCodes.BadCertificateUntrusted); };
@@ -46,26 +51,56 @@ namespace Service
 
                 var application = new ApplicationInstance
                 {
-                    ApplicationName = "XiaoOpcua",
-                    ApplicationType = ApplicationType.Server,
+                    ApplicationName = "Axiu UA Discovery",
+                    ApplicationType = ApplicationType.DiscoveryServer,
                     ApplicationConfiguration = config
                 };
+                //application.CheckApplicationInstanceCertificate(false, 2048).GetAwaiter().GetResult();
                 bool certOk = application.CheckApplicationInstanceCertificate(false, 0).Result;
                 if (!certOk)
                 {
-                    Console.WriteLine("证书验证失败");
+                    Console.WriteLine("证书验证失败!");
                 }
 
-                var dis = new DiscoveryServerBase();
-                application.Start(new XOpcuaServer()).Wait();
+                var server = new DiscoveryServer();
+                // start the server.
+                application.Start(server).Wait();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("启动OPC-UA服务端触发异常:" + e.Message);
+                Console.WriteLine("启动OPC-UA Discovery服务端触发异常:" + ex.Message);
                 Console.ResetColor();
             }
-
         }
+    }
+    /// <summary>
+    /// 已注册服务列表
+    /// </summary>
+    /// <remarks>
+    /// 主要用于保存服务注册信息,客户端获取列表时将对应的信息返回给客户端
+    /// </remarks>
+    public class RegisteredServerTable
+    {
+        public string ServerUri { get; set; }
+
+        public string ProductUri { get; set; }
+
+        public LocalizedTextCollection ServerNames { get; set; }
+
+        public ApplicationType ServerType { get; set; }
+
+        public string GatewayServerUri { get; set; }
+
+        public StringCollection DiscoveryUrls { get; set; }
+
+        public string SemaphoreFilePath { get; set; }
+
+        public bool IsOnline { get; set; }
+
+        /// <summary>
+        /// 最后一次注册时间
+        /// </summary>
+        public DateTime LastRegistered { get; set; }
     }
 }
