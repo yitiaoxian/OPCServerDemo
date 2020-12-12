@@ -3,17 +3,21 @@ using Opc.Ua.Server;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 using System.Threading;
 using System.Xml;
 using Range = Opc.Ua.Range;
 
 namespace Service
 {
-    public class NodeManager : CustomNodeManager2
+    public class OpcuaNodeManager : CustomNodeManager2
     {
         #region Constructors
-        public NodeManager(IServiceProvider server,ApplicationConfiguration configuration)
+        /// <summary>
+        /// 初始化结点管理器
+        /// </summary>
+        /// <param name="server"></param>
+        /// <param name="configuration"></param>
+        public OpcuaNodeManager(IServerInternal server,ApplicationConfiguration configuration)
             : base (server,configuration, "http://opcfoundation.org/Quickstarts/ReferenceApplications")
         {
             SystemContext.NodeIdFactory = this;
@@ -23,7 +27,7 @@ namespace Service
         #endregion
         #region IDisposable Members
         /// <summary>
-        /// An overrideable version of the Dispose.
+        /// 
         /// </summary>
         protected override void Dispose(bool disposing)
         {
@@ -36,7 +40,7 @@ namespace Service
 
         #region INodeIdFactory Members
         /// <summary>
-        /// Creates the NodeId for the specified node.
+        /// 给指定结点创建结点ID
         /// </summary>
         public override NodeId New(ISystemContext context, NodeState node)
         {
@@ -57,6 +61,12 @@ namespace Service
         #endregion
 
         #region Private Helper Functions
+        /// <summary>
+        /// 创建类型
+        /// 判断是否是opc ua中的类型
+        /// </summary>
+        /// <param name="builtInType"></param>
+        /// <returns></returns>
         private static bool IsAnalogType(BuiltInType builtInType)
         {
             switch (builtInType)
@@ -75,6 +85,11 @@ namespace Service
             }
             return false;
         }
+        /// <summary>
+        /// 信号值类型表示的范围
+        /// </summary>
+        /// <param name="builtInType"></param>
+        /// <returns></returns>
         private static Opc.Ua.Range GetAnalogRange(BuiltInType builtInType)
         {
             switch (builtInType)
@@ -105,6 +120,10 @@ namespace Service
         }
         #endregion       
         #region Overrides INodeManager Members
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="externalReferences"></param>
         public override void CreateAddressSpace(IDictionary<NodeId,IList<IReference>> externalReferences)
         {
             lock (Lock)
@@ -160,7 +179,7 @@ namespace Service
                     variables.Add(CreateVariable(staticFolder, scalarStatic + "XmlElement", "XmlElement", DataTypeIds.XmlElement, ValueRanks.Scalar));
 
                     BaseDataVariableState decimalVariable = CreateVariable(staticFolder, scalarStatic + "Decimal", "Decimal", DataTypeIds.DecimalDataType, ValueRanks.Scalar);
-                    // Set an arbitrary precision decimal value.
+                    // 设置一个任意精度的十进制值
                     BigInteger largeInteger = BigInteger.Parse("1234567890123546789012345678901234567890123456789012345");
                     DecimalDataType decimalValue = new DecimalDataType();
                     decimalValue.Scale = 100;
@@ -179,7 +198,7 @@ namespace Service
                     variables.Add(CreateVariable(arraysFolder, staticArrays + "DateTime", "DateTime", DataTypeIds.DateTime, ValueRanks.OneDimension));
 
                     BaseDataVariableState doubleArrayVar = CreateVariable(arraysFolder, staticArrays + "Double", "Double", DataTypeIds.Double, ValueRanks.OneDimension);
-                    // Set the first elements of the array to a smaller value.
+                    // 将数组的第一个元素设置为较小的值
                     double[] doubleArrayVal = doubleArrayVar.Value as double[];
                     doubleArrayVal[0] %= 10E+10;
                     doubleArrayVal[1] %= 10E+10;
@@ -190,7 +209,7 @@ namespace Service
                     variables.Add(CreateVariable(arraysFolder, staticArrays + "Duration", "Duration", DataTypeIds.Duration, ValueRanks.OneDimension));
 
                     BaseDataVariableState floatArrayVar = CreateVariable(arraysFolder, staticArrays + "Float", "Float", DataTypeIds.Float, ValueRanks.OneDimension);
-                    // Set the first elements of the array to a smaller value.
+                    // 将数组的第一个元素设置为较小的值
                     float[] floatArrayVal = floatArrayVar.Value as float[];
                     floatArrayVal[0] %= 0xf10E + 4;
                     floatArrayVal[1] %= 0xf10E + 4;
@@ -520,7 +539,7 @@ namespace Service
                     FolderState twoStateDiscreteFolder = CreateFolder(discreteTypeFolder, "DataAccess_TwoStateDiscreteType", "TwoStateDiscreteType");
                     const string daTwoStateDiscrete = "DataAccess_TwoStateDiscreteType_";
 
-                    // Add our Nodes to the folder, and specify their customized discrete enumerations
+                    //将结点添加到文件夹，指定其自定义的离散枚举
                     CreateTwoStateDiscreteItemVariable(twoStateDiscreteFolder, daTwoStateDiscrete + "001", "001", "red", "blue");
                     CreateTwoStateDiscreteItemVariable(twoStateDiscreteFolder, daTwoStateDiscrete + "002", "002", "open", "close");
                     CreateTwoStateDiscreteItemVariable(twoStateDiscreteFolder, daTwoStateDiscrete + "003", "003", "up", "down");
@@ -530,7 +549,7 @@ namespace Service
                     FolderState multiStateDiscreteFolder = CreateFolder(discreteTypeFolder, "DataAccess_MultiStateDiscreteType", "MultiStateDiscreteType");
                     const string daMultiStateDiscrete = "DataAccess_MultiStateDiscreteType_";
 
-                    // Add our Nodes to the folder, and specify their customized discrete enumerations
+                    //将结点添加到文件夹，指定其自定义的离散枚举
                     CreateMultiStateDiscreteItemVariable(multiStateDiscreteFolder, daMultiStateDiscrete + "001", "001", "open", "closed", "jammed");
                     CreateMultiStateDiscreteItemVariable(multiStateDiscreteFolder, daMultiStateDiscrete + "002", "002", "red", "green", "blue", "cyan");
                     CreateMultiStateDiscreteItemVariable(multiStateDiscreteFolder, daMultiStateDiscrete + "003", "003", "lolo", "lo", "normal", "hi", "hihi");
@@ -542,14 +561,14 @@ namespace Service
                     FolderState multiStateValueDiscreteFolder = CreateFolder(discreteTypeFolder, "DataAccess_MultiStateValueDiscreteType", "MultiStateValueDiscreteType");
                     const string daMultiStateValueDiscrete = "DataAccess_MultiStateValueDiscreteType_";
 
-                    // Add our Nodes to the folder, and specify their customized discrete enumerations
+                    // 将结点添加到文件夹，指定其自定义的离散枚举
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "001", "001", new string[] { "open", "closed", "jammed" });
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "002", "002", new string[] { "red", "green", "blue", "cyan" });
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "003", "003", new string[] { "lolo", "lo", "normal", "hi", "hihi" });
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "004", "004", new string[] { "left", "right", "center" });
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "005", "005", new string[] { "circle", "cross", "triangle" });
 
-                    // Add our Nodes to the folder and specify varying data types
+                    // 将结点添加到文件夹，指定变化数据的类型
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "Byte", "Byte", DataTypeIds.Byte, new string[] { "open", "closed", "jammed" });
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "Int16", "Int16", DataTypeIds.Int16, new string[] { "red", "green", "blue", "cyan" });
                     CreateMultiStateValueDiscreteItemVariable(multiStateValueDiscreteFolder, daMultiStateValueDiscrete + "Int32", "Int32", DataTypeIds.Int32, new string[] { "lolo", "lo", "normal", "hi", "hihi" });
@@ -569,7 +588,7 @@ namespace Service
                     referencesInstructions.Value = "This folder will contain nodes that have specific Reference configurations.";
                     variables.Add(referencesInstructions);
 
-                    // create variable nodes with specific references
+                    // 结合索引解释创建变量结点
                     BaseDataVariableState hasForwardReference = CreateMeshVariable(referencesFolder, referencesPrefix + "HasForwardReference", "HasForwardReference");
                     hasForwardReference.AddReference(ReferenceTypes.HasCause, false, variables[0].NodeId);
                     variables.Add(hasForwardReference);
@@ -707,7 +726,6 @@ namespace Service
                     rpAuthenticatedUser.Description = "This node can be accessed by users that have AuthenticatedUser Role";
                     rpAuthenticatedUser.RolePermissions = new RolePermissionTypeCollection()
                     {
-                        // allow access to users with AuthenticatedUser role
                         new RolePermissionType()
                         {
                             RoleId = ObjectIds.WellKnownRole_AuthenticatedUser,
@@ -721,7 +739,6 @@ namespace Service
                     rpAdminUser.AccessRestrictions = AccessRestrictionType.EncryptionRequired;
                     rpAdminUser.RolePermissions = new RolePermissionTypeCollection()
                     {
-                        // allow access to users with SecurityAdmin role
                         new RolePermissionType()
                         {
                             RoleId = ObjectIds.WellKnownRole_SecurityAdmin,
@@ -730,7 +747,6 @@ namespace Service
                     };
                     variables.Add(rpAdminUser);
 
-                    // sub-folder for "AccessRestrictions"
                     FolderState folderAccessRestrictions = CreateFolder(folderAccessRights, "AccessRights_AccessRestrictions", "AccessRestrictions");
                     const string accessRestrictions = "AccessRights_AccessRestrictions_";
 
@@ -795,7 +811,7 @@ namespace Service
 
                     #region Add Method
                     MethodState addMethod = CreateMethod(methodsFolder, methods + "Add", "Add");
-                    // set input arguments
+                    // 设置输入参数
                     addMethod.InputArguments = new PropertyState<Argument[]>(addMethod);
                     addMethod.InputArguments.NodeId = new NodeId(addMethod.BrowseName.Name + "InArgs", NamespaceIndex);
                     addMethod.InputArguments.BrowseName = BrowseNames.InputArguments;
@@ -811,7 +827,7 @@ namespace Service
                         new Argument() { Name = "UInt32 value", Description = "UInt32 value",  DataType = DataTypeIds.UInt32, ValueRank = ValueRanks.Scalar }
                     };
 
-                    // set output arguments
+                    // 设置输出参数
                     addMethod.OutputArguments = new PropertyState<Argument[]>(addMethod);
                     addMethod.OutputArguments.NodeId = new NodeId(addMethod.BrowseName.Name + "OutArgs", NamespaceIndex);
                     addMethod.OutputArguments.BrowseName = BrowseNames.OutputArguments;
@@ -831,7 +847,7 @@ namespace Service
 
                     #region Multiply Method
                     MethodState multiplyMethod = CreateMethod(methodsFolder, methods + "Multiply", "Multiply");
-                    // set input arguments
+                    // 设置输入参数
                     multiplyMethod.InputArguments = new PropertyState<Argument[]>(multiplyMethod);
                     multiplyMethod.InputArguments.NodeId = new NodeId(multiplyMethod.BrowseName.Name + "InArgs", NamespaceIndex);
                     multiplyMethod.InputArguments.BrowseName = BrowseNames.InputArguments;
@@ -867,7 +883,7 @@ namespace Service
 
                     #region Divide Method
                     MethodState divideMethod = CreateMethod(methodsFolder, methods + "Divide", "Divide");
-                    // set input arguments
+                    // 设置输入参数
                     divideMethod.InputArguments = new PropertyState<Argument[]>(divideMethod);
                     divideMethod.InputArguments.NodeId = new NodeId(divideMethod.BrowseName.Name + "InArgs", NamespaceIndex);
                     divideMethod.InputArguments.BrowseName = BrowseNames.InputArguments;
@@ -883,7 +899,7 @@ namespace Service
                         new Argument() { Name = "UInt16 value", Description = "UInt16 value",  DataType = DataTypeIds.UInt16, ValueRank = ValueRanks.Scalar }
                     };
 
-                    // set output arguments
+                    // 设置输出参数
                     divideMethod.OutputArguments = new PropertyState<Argument[]>(divideMethod);
                     divideMethod.OutputArguments.NodeId = new NodeId(divideMethod.BrowseName.Name + "OutArgs", NamespaceIndex);
                     divideMethod.OutputArguments.BrowseName = BrowseNames.OutputArguments;
@@ -903,7 +919,7 @@ namespace Service
 
                     #region Substract Method
                     MethodState substractMethod = CreateMethod(methodsFolder, methods + "Substract", "Substract");
-                    // set input arguments
+                    // 设置输入参数
                     substractMethod.InputArguments = new PropertyState<Argument[]>(substractMethod);
                     substractMethod.InputArguments.NodeId = new NodeId(substractMethod.BrowseName.Name + "InArgs", NamespaceIndex);
                     substractMethod.InputArguments.BrowseName = BrowseNames.InputArguments;
@@ -919,7 +935,7 @@ namespace Service
                         new Argument() { Name = "Byte value", Description = "Byte value",  DataType = DataTypeIds.Byte, ValueRank = ValueRanks.Scalar }
                     };
 
-                    // set output arguments
+                    // 设置输出参数
                     substractMethod.OutputArguments = new PropertyState<Argument[]>(substractMethod);
                     substractMethod.OutputArguments.NodeId = new NodeId(substractMethod.BrowseName.Name + "OutArgs", NamespaceIndex);
                     substractMethod.OutputArguments.BrowseName = BrowseNames.OutputArguments;
@@ -939,7 +955,7 @@ namespace Service
 
                     #region Hello Method
                     MethodState helloMethod = CreateMethod(methodsFolder, methods + "Hello", "Hello");
-                    // set input arguments
+                    // 设置输入参数
                     helloMethod.InputArguments = new PropertyState<Argument[]>(helloMethod);
                     helloMethod.InputArguments.NodeId = new NodeId(helloMethod.BrowseName.Name + "InArgs", NamespaceIndex);
                     helloMethod.InputArguments.BrowseName = BrowseNames.InputArguments;
@@ -954,7 +970,7 @@ namespace Service
                         new Argument() { Name = "String value", Description = "String value",  DataType = DataTypeIds.String, ValueRank = ValueRanks.Scalar }
                     };
 
-                    // set output arguments
+                    // 设置输出参数
                     helloMethod.OutputArguments = new PropertyState<Argument[]>(helloMethod);
                     helloMethod.OutputArguments.NodeId = new NodeId(helloMethod.BrowseName.Name + "OutArgs", NamespaceIndex);
                     helloMethod.OutputArguments.BrowseName = BrowseNames.OutputArguments;
@@ -974,7 +990,7 @@ namespace Service
 
                     #region Input Method
                     MethodState inputMethod = CreateMethod(methodsFolder, methods + "Input", "Input");
-                    // set input arguments
+                    // 设置输入参数
                     inputMethod.InputArguments = new PropertyState<Argument[]>(inputMethod);
                     inputMethod.InputArguments.NodeId = new NodeId(inputMethod.BrowseName.Name + "InArgs", NamespaceIndex);
                     inputMethod.InputArguments.BrowseName = BrowseNames.InputArguments;
@@ -995,7 +1011,7 @@ namespace Service
                     #region Output Method
                     MethodState outputMethod = CreateMethod(methodsFolder, methods + "Output", "Output");
 
-                    // set output arguments
+                    // 设置输出参数
                     outputMethod.OutputArguments = new PropertyState<Argument[]>(helloMethod);
                     outputMethod.OutputArguments.NodeId = new NodeId(helloMethod.BrowseName.Name + "OutArgs", NamespaceIndex);
                     outputMethod.OutputArguments.BrowseName = BrowseNames.OutputArguments;

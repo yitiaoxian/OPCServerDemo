@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Service
 {
-    class XOpcuaManagement
+    class OpcuaManagement
     {
         public void CreateServerInstance()
         {
@@ -14,8 +14,8 @@ namespace Service
             {
                 var config = new ApplicationConfiguration()
                 {
-                    ApplicationName = "XiaoOpcua",
-                    ApplicationUri = Utils.Format(@"urn:{0}:XiaoOpcua", System.Net.Dns.GetHostName()),
+                    ApplicationName = "XOpcua",
+                    ApplicationUri = Utils.Format(@"urn:{0}:XOpcua", System.Net.Dns.GetHostName()),
                     ApplicationType = ApplicationType.Server,
                     ServerConfiguration = new ServerConfiguration()
                     {
