@@ -14,14 +14,14 @@ namespace Service
         {
             Utils.Trace("Creating the node managers");
             List<INodeManager> nodeManagers = new List<INodeManager>();
-            nodeManagers.Add(new NodeManager(server,configuration));
+            nodeManagers.Add(new OpcuaNodeManager(server,configuration));
             return new MasterNodeManager(server, configuration, null, nodeManagers.ToArray());
         }
         #endregion
         /// <summary>
-        /// Loads the non-configurable properties for the application.
+        /// 为应用加载非配置的属性
         /// </summary>
-        /// These properties are exposed by the server but cannot be changed by administrators.
+        /// 这些属性服务器可见，用户不可更改
         /// <returns></returns>
         protected override ServerProperties LoadServerProperties()
         {
@@ -148,7 +148,6 @@ namespace Service
                 }
                 else
                 {
-                    // construct translation object with default text.
                     info = new TranslationInfo(
                         "UntrustedCertificate",
                         "en-US",
@@ -156,7 +155,6 @@ namespace Service
                         certificate.Subject);
                 }
 
-                // create an exception with a vendor defined sub-code.
                 throw new ServiceResultException(new ServiceResult(
                     result,
                     info.Key,
@@ -171,34 +169,30 @@ namespace Service
             var password = userNameIdentityToken.DecryptedPassword;
             if (String.IsNullOrEmpty(userName))
             {
-                // an empty username is not accepted.
+                // 用户名不可空
                 throw ServiceResultException.Create(StatusCodes.BadIdentityTokenInvalid,
                     "Security token is not a valid username token. An empty username is not accepted.");
             }
             if (String.IsNullOrEmpty(password))
-            // an empty password is not accepted.
+            // 密码不可空
             {
                 throw ServiceResultException.Create(StatusCodes.BadIdentityTokenRejected,
                     "Security token is not a valid username token. An empty password is not accepted.");
             }
-            // User with permission to configure server
             if (userName == "sysadmin" && password == "demo")
             {
                 return new SystemConfigurationIdentity(new UserIdentity(userNameIdentityToken));
             }
 
-            // standard users for CTT verification
             if (!((userName == "user1" && password == "password") ||
                 (userName == "user2" && password == "password1")))
             {
-                // construct translation object with default text.
                 TranslationInfo info = new TranslationInfo(
                     "InvalidPassword",
                     "en-US",
                     "Invalid username or password.",
                     userName);
 
-                // create an exception with a vendor defined sub-code.
                 throw new ServiceResultException(new ServiceResult(
                     StatusCodes.BadUserAccessDenied,
                     "InvalidPassword",
